@@ -116,9 +116,10 @@ class Tweetshot:
             Tweet element.
 
         """
-        xpath = '/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div/div/section/div/div/div/div[1]/div/' \
-                'div/div/div/article'
-
+        # Annoyingly, all classes are dynamically named so the best we can do is either
+        # a convoluted xpath through multiple divs or use the `article` element and hope
+        # they don't switch the tag or attributes too often.
+        xpath = '//article[@role="article"][@tabindex="0"][1]'
         return WebDriverWait(self.driver, self.timeout).until(EC.visibility_of_element_located((By.XPATH, xpath)))
 
     def get_tweet_image_element(self):
