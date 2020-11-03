@@ -20,6 +20,8 @@ def parse_arguments():
                         "the file will be saved in the same directory where the program is located. Otherwise, an"
                         "absolute path can be introduced to save the file in a different directory")
 
+    parser.add_argument("-z", "--zoom", type=int, default=1, choices=range(1, 10), help="Zoom level")
+
     return parser.parse_args()
 
 
@@ -32,4 +34,4 @@ def main():
         elif args.driver_type == 'firefox':
             args.custom_driver = 'geckodriver'
 
-    take_screenshot(args.url, args.driver_type, args.custom_driver, args.timeout, args.filename)
+    take_screenshot(args.url, args.driver_type, args.custom_driver, args.timeout, args.filename, args.zoom)

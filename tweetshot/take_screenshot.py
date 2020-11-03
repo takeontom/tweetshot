@@ -20,12 +20,13 @@ class Tweetshot:
 
     """
 
-    def __init__(self, url, type_driver='chrome', executable_path=None, timeout=30):
+    def __init__(self, url, type_driver='chrome', executable_path=None, timeout=30, zoom=1):
         """Initializes instance of class Tweetshot."""
         self.url = url
         self.type_driver = type_driver
         self.executable_path = executable_path
         self.timeout = timeout
+        self.zoom = zoom
 
         self.driver = None
 
@@ -39,7 +40,7 @@ class Tweetshot:
         self.set_up()
         self.go_to_url()
         tweet_element = self.get_tweet_element()
-        tweet_location = self.get_tweet_location(tweet_element)
+        tweet_location = self.get_tweet_location(tweet_element, self.zoom)
         self.wait_tweet_image_element()
         full_screenshot = self.take_full_screenshot()
         self.tear_down()
@@ -79,6 +80,11 @@ class Tweetshot:
     def set_up(self):
         """Sets up the Selenium driver connection."""
         self.driver = get_driver(type=self.type_driver, executable_path=self.executable_path)
+        self.driver.set_window_position(0, 0)
+
+        # Ensure selenium browser size is big enough for zoomed tweet. Multiples of 900
+        # just seem to work nicely when multipled by zoom factor.
+        self.driver.set_window_size(900 * self.zoom, 900 * self.zoom)
 
     def tear_down(self):
         """Tears down the Selenium driver connection."""
@@ -87,6 +93,9 @@ class Tweetshot:
     def go_to_url(self):
         """Sends the selenium driver to a specific url."""
         self.driver.get(self.url)
+
+        # Setting the browser's zoom needs to be done after going to the URL
+        self.driver.execute_script(f"document.body.style.zoom='{self.zoom}'")
 
     def take_full_screenshot(self):
         """Takes a screenshot of the full visible screen.
@@ -138,7 +147,7 @@ class Tweetshot:
             pass
 
     @staticmethod
-    def get_tweet_location(tweet_element):
+    def get_tweet_location(tweet_element, zoom=1):
         """Gets a 4-tuple defining the left, upper, right, and lower pixel coordinate of the tweet element.
 
         Args:
@@ -150,10 +159,10 @@ class Tweetshot:
         """
         location = tweet_element.location
         size = tweet_element.size
-        left = location['x']
-        top = location['y']
-        right = location['x'] + size['width']
-        bottom = location['y'] + size['height']
+        left = location['x'] * zoom
+        top = location['y'] * zoom
+        right = left + size['width'] * zoom
+        bottom = top + size['height'] * zoom
 
         return left, top, right, bottom
 
@@ -191,7 +200,7 @@ class Tweetshot:
         return output_filename
 
 
-def take_screenshot(url, type_driver='chrome', executable_path=None, timeout=10, output_filename='screenshot'):
+def take_screenshot(url, type_driver='chrome', executable_path=None, timeout=10, output_filename='screenshot', zoom=1):
     """Takes a screenshot of a tweet and saves it to disk.
 
     Args:
@@ -205,7 +214,7 @@ def take_screenshot(url, type_driver='chrome', executable_path=None, timeout=10,
         Path: Path to the saved file.
 
     """
-    return Tweetshot(url, type_driver, executable_path, timeout).save_tweet_screenshot(output_filename)
+    return Tweetshot(url, type_driver, executable_path, timeout, zoom=zoom).save_tweet_screenshot(output_filename)
 
 
 def take_screenshot_as_pil(url, type_driver='chrome', executable_path=None, timeout=10):
